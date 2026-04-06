@@ -3,7 +3,7 @@ Credit Report Extractor
 Parses PDF credit records (business credit reports, personal credit reports,
 D&B/Experian/Equifax-style documents) and returns structured data.
 
-Strategy:
+Flow:
   1. Try pdfplumber (best for text-based PDFs).
   2. If pdfplumber yields little text, fall back to PyMuPDF (fitz).
   3. If still sparse, flag for OCR (handled by FinancialDocExtractor's OCR path).
@@ -80,7 +80,6 @@ class CreditReportExtractor:
         )
         return result
 
-    # ── private ────────────────────────────────────────────────────────────
 
     def _extract_text(self) -> str:
         text_parts: list[str] = []
@@ -97,7 +96,7 @@ class CreditReportExtractor:
 
     def _extract_text_pymupdf(self) -> list[str]:
         try:
-            import fitz  # PyMuPDF
+            import fitz  
             doc = fitz.open(str(self.file_path))
             return [page.get_text() for page in doc]
         except Exception as e:
@@ -120,7 +119,6 @@ class CreditReportExtractor:
         """
         trade_lines: list[dict[str, str]] = []
 
-        # Look for blocks that contain creditor name, balance, and status keywords
         block_pattern = re.compile(
             r"(?P<creditor>[A-Z][A-Z &,.\-]+)\s+"
             r"(?:balance|bal)[:\s]+\$?(?P<balance>[\d,]+)\s+"

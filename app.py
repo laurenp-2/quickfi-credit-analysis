@@ -1,5 +1,5 @@
 """
-QuickFi Credit Agent — Streamlit UI (Week 5 full build; this is the skeleton)
+QuickFi Credit Agent — Streamlit UI 
 Run:  streamlit run app.py
 """
 import streamlit as st
@@ -20,10 +20,7 @@ mode = st.sidebar.radio(
          "Credit Summary: analyze financial documents and generate a risk report.",
 )
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Status:** Week 1 — Extractors complete")
-
-# ── Validation Mode ──────────────────────────────────────────────────────────
+# Validation Mode 
 if mode == "Validation":
     st.header("Credit Application Validation")
     st.markdown(
@@ -49,7 +46,7 @@ if mode == "Validation":
     if st.button("Run Validation", type="primary", disabled=not (app_file and credit_files)):
         st.info("Validation pipeline coming in Week 4.")
 
-# ── Credit Summary Mode ──────────────────────────────────────────────────────
+# Credit Summary Mode 
 else:
     st.header("Credit Summary Generator")
     st.markdown(

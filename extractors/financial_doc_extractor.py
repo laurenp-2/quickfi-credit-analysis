@@ -17,7 +17,7 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-# Map doc type keywords → canonical document category
+
 DOC_TYPE_KEYWORDS: dict[str, list[str]] = {
     "tax_return":       ["1040", "1120", "1065", "schedule c", "tax return", "irs form"],
     "bank_statement":   ["bank statement", "account statement", "checking", "savings", "deposit"],
@@ -53,7 +53,7 @@ def _extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str) -> str:
 
     full_text = "\n".join(text_parts).strip()
 
-    # OCR fallback if text extraction yielded very little
+
     if len(full_text) < 200:
         logger.info("Sparse text in %s — attempting OCR fallback.", filename)
         full_text = _ocr_pdf_bytes(pdf_bytes, filename)
@@ -64,7 +64,7 @@ def _extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str) -> str:
 def _ocr_pdf_bytes(pdf_bytes: bytes, filename: str) -> str:
     """Render PDF pages as images and run pytesseract OCR on each."""
     try:
-        import fitz  # PyMuPDF
+        import fitz  
         import pytesseract
     except ImportError as e:
         logger.error("OCR dependencies missing (%s). Install PyMuPDF and pytesseract.", e)
@@ -74,7 +74,6 @@ def _ocr_pdf_bytes(pdf_bytes: bytes, filename: str) -> str:
     try:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         for page_num, page in enumerate(doc):
-            # Render at 2x resolution for better OCR accuracy
             mat = fitz.Matrix(2.0, 2.0)
             pix = page.get_pixmap(matrix=mat)
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
