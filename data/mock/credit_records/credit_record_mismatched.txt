@@ -1,0 +1,23 @@
+BUSINESS CREDIT REPORT
+Source: Experian Business Credit
+
+Business Name: Apex Trucking LLC
+EIN: 82-4567890          <- NOTE: application submitted EIN 82-9999999
+Address: 4400 Industrial Blvd, Dallas, TX 75247
+Business Type: LLC
+Industry: Trucking / Transportation
+Years in Business: 8
+Date Established: January 2016
+
+CREDIT SUMMARY
+Credit Score: 724         <- NOTE: application stated 689
+Paydex Score: 78
+Days Beyond Terms (DBT): 4
+
+FINANCIAL HIGHLIGHTS
+Annual Revenue (reported): $2,400,000  <- NOTE: application stated $3,800,000
+
+OWNER / PRINCIPAL
+Owner: James R. Mitchell
+SSN: *****7731
+Date of Birth: 03/14/1978
