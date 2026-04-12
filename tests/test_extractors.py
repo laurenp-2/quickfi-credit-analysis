@@ -1,5 +1,5 @@
 """
-Week 1 extractor smoke tests.
+Extractor smoke tests.
 Run:  pytest tests/test_extractors.py -v
 """
 import os

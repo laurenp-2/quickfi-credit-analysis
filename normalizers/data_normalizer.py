@@ -1,5 +1,5 @@
 """
-Data Normalizer (Week 2 — stub for now)
+Data Normalizer 
 Cleans and standardizes extracted values so the validation agent
 can do apples-to-apples comparisons between application data and credit records.
 """

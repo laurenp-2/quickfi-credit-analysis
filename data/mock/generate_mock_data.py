@@ -1,5 +1,5 @@
 """
-Generate all mock test data for Week 1 testing.
+Generate all mock test data for extractor testing.
 Run from project root:  python data/mock/generate_mock_data.py
 
 Creates:

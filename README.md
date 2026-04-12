@@ -41,8 +41,8 @@ quickfi/
 │   └── financial_doc_extractor.py  # Unpacks zip archives, OCR fallback
 ├── normalizers/
 │   └── data_normalizer.py          # Standardizes EIN, names, currency, etc.
-├── agents/                   # Validation + Credit Summary pipelines (Week 4)
-├── prompts/                  # LLM prompt templates (Week 3)
+├── agents/                   # Validation + Credit Summary pipelines 
+├── prompts/                  # LLM prompt templates 
 ├── data/mock/                # Generated test data (run generate_mock_data.py)
 └── tests/                    # Pytest suite
 ```
@@ -58,8 +58,6 @@ pytest tests/ -v
 | Variable | Description |
 |---|---|
 | `LLM_PROVIDER` | `anthropic` or `openai` |
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
 | `OPENAI_API_KEY` | Your OpenAI API key |
-| `ANTHROPIC_MODEL` | Default: `claude-opus-4-6` |
 | `OPENAI_MODEL` | Default: `gpt-4o` |
 
