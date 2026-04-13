@@ -10,7 +10,7 @@ from typing import Any, Optional, Union
 class DataNormalizer:
     """Normalize common field types to a canonical form."""
 
-    # ── Business name ───────────────────────────────────────────────────────
+# Business name: uppercase, strip legal suffixes, remove extra spaces
     @staticmethod
     def business_name(name: str) -> str:
         if not name:
@@ -21,7 +21,7 @@ class DataNormalizer:
             name = name.replace(suffix, "")
         return " ".join(name.split())
 
-    # ── EIN ─────────────────────────────────────────────────────────────────
+ #EIN
     @staticmethod
     def ein(value: str) -> str:
         """Return EIN as 'XX-XXXXXXX'."""
@@ -30,13 +30,13 @@ class DataNormalizer:
             return f"{digits[:2]}-{digits[2:]}"
         return digits
 
-    # ── Phone ────────────────────────────────────────────────────────────────
+# Phone number
     @staticmethod
     def phone(value: str) -> str:
         """Return 10-digit string."""
         return re.sub(r"\D", "", str(value or ""))[-10:]
 
-    # ── Currency → float ────────────────────────────────────────────────────
+# Currency → float
     @staticmethod
     def currency(value: Any) -> Optional[float]:
         if value is None:
@@ -47,7 +47,7 @@ class DataNormalizer:
         except ValueError:
             return None
 
-    # ── Credit score → int ──────────────────────────────────────────────────
+# Credit score → int (300-850)
     @staticmethod
     def credit_score(value: Any) -> Optional[int]:
         try:
@@ -56,7 +56,7 @@ class DataNormalizer:
         except (ValueError, TypeError):
             return None
 
-    # ── Address ─────────────────────────────────────────────────────────────
+# Address normalization: uppercase, abbreviate common terms, remove extra spaces
     @staticmethod
     def address(value: str) -> str:
         if not value:
@@ -71,7 +71,7 @@ class DataNormalizer:
             upper = re.sub(rf"\b{long}\b", short, upper)
         return " ".join(upper.split())
 
-    # ── Normalize a full record dict ─────────────────────────────────────────
+ # Main normalization method that applies type-specific normalization to each field
     def normalize_record(self, record: dict[str, Any]) -> dict[str, Any]:
         """Apply type-appropriate normalization to each field in a record."""
         out = {}
