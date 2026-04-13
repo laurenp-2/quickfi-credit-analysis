@@ -21,13 +21,12 @@ from extractors.credit_report_extractor import CreditReportExtractor
 from extractors.financial_doc_extractor import FinancialDocExtractor
 from normalizers.data_normalizer import DataNormalizer
 
-# Ratio calculator lives in ratios/calculator.py (Rinah's module)
+# Ratio calculator lives in ratios/calculator.py 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from ratios.calculator import calculate_all  # noqa: E402
 
 logger = logging.getLogger(__name__)
 _norm = DataNormalizer()
-
 
 
 
