@@ -15,28 +15,9 @@ from typing import Any, Union
 import pdfplumber
 from PIL import Image
 
+from extractors.doc_classifier import classify_document
+
 logger = logging.getLogger(__name__)
-
-
-DOC_TYPE_KEYWORDS: dict[str, list[str]] = {
-    "tax_return":       ["1040", "1120", "1065", "schedule c", "tax return", "irs form"],
-    "bank_statement":   ["bank statement", "account statement", "checking", "savings", "deposit"],
-    "profit_loss":      ["profit & loss", "profit and loss", "p&l", "income statement", "statement of operations"],
-    "balance_sheet":    ["balance sheet", "statement of financial position", "assets and liabilities"],
-    "accounts_receivable": ["accounts receivable", "aging report", "a/r aging"],
-    "accounts_payable": ["accounts payable", "a/p aging"],
-    "equipment_invoice":["invoice", "purchase order", "equipment quote", "bill of sale"],
-    "personal_financial_statement": ["personal financial statement", "pfs", "net worth statement"],
-}
-
-
-def _classify_document(text: str, filename: str) -> str:
-    """Guess document type from content and filename."""
-    combined = (text + " " + filename).lower()
-    for doc_type, keywords in DOC_TYPE_KEYWORDS.items():
-        if any(kw in combined for kw in keywords):
-            return doc_type
-    return "unknown"
 
 
 def _extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str) -> str:
@@ -162,7 +143,7 @@ class FinancialDocExtractor:
         pre_ocr_len = len(raw_text)
         used_ocr = ext != ".pdf" or pre_ocr_len < 200
 
-        doc_type = _classify_document(raw_text, filename)
+        doc_type = classify_document(raw_text, filename)
 
         return {
             "filename":   filename,

@@ -76,7 +76,7 @@ def calculate_all(f: dict) -> dict:
     if results["NSF_flag_avg_balance"]["value"] is None: gaps.append("nsf_count or avg_balance")
 
     # NSF flag — direct check, no formula
-    nsf = f.get("nsf_count", 0)
+    nsf = f.get("nsf_count") or 0
     if nsf >= 3: flags.append(f"{nsf}_nsfs")
 
     # overall tier = worst single ratio tier
