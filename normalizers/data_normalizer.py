@@ -1,10 +1,15 @@
 """
-Data Normalizer 
+Data Normalizer
 Cleans and standardizes extracted values so the validation agent
 can do apples-to-apples comparisons between application data and credit records.
 """
 import re
 from typing import Any, Optional, Union
+
+
+_MATCH    = "match"
+_MISMATCH = "mismatch"
+_MISSING  = "missing"
 
 
 class DataNormalizer:
@@ -70,6 +75,110 @@ class DataNormalizer:
         for long, short in abbrevs.items():
             upper = re.sub(rf"\b{long}\b", short, upper)
         return " ".join(upper.split())
+
+    # ------------------------------------------------------------------ #
+    #  Field-level comparators                                            #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def compare_business_name(a: str, b: str) -> dict:
+        """Exact match after normalization (suffixes already stripped)."""
+        na, nb = DataNormalizer.business_name(a), DataNormalizer.business_name(b)
+        status = _MATCH if na == nb else _MISMATCH
+        return {"status": status, "application": na, "credit_record": nb}
+
+    @staticmethod
+    def compare_ein(a: str, b: str) -> dict:
+        """Exact match after formatting."""
+        na, nb = DataNormalizer.ein(a), DataNormalizer.ein(b)
+        status = _MATCH if na == nb else _MISMATCH
+        return {"status": status, "application": na, "credit_record": nb}
+
+    @staticmethod
+    def compare_phone(a: str, b: str) -> dict:
+        """Exact match on 10-digit string."""
+        na, nb = DataNormalizer.phone(a), DataNormalizer.phone(b)
+        status = _MATCH if na == nb else _MISMATCH
+        return {"status": status, "application": na, "credit_record": nb}
+
+    @staticmethod
+    def compare_currency(a: Any, b: Any, tolerance: float = 0.05) -> dict:
+        """Match if values are within `tolerance` (default 5%) of each other."""
+        na, nb = DataNormalizer.currency(a), DataNormalizer.currency(b)
+        if na is None or nb is None:
+            return {"status": _MISSING, "application": na, "credit_record": nb}
+        if na == nb == 0.0:
+            status = _MATCH
+        else:
+            pct_diff = abs(na - nb) / max(abs(na), abs(nb))
+            status = _MATCH if pct_diff <= tolerance else _MISMATCH
+        return {"status": status, "application": na, "credit_record": nb}
+
+    @staticmethod
+    def compare_credit_score(a: Any, b: Any) -> dict:
+        """Exact match after normalization."""
+        na, nb = DataNormalizer.credit_score(a), DataNormalizer.credit_score(b)
+        if na is None or nb is None:
+            return {"status": _MISSING, "application": na, "credit_record": nb}
+        status = _MATCH if na == nb else _MISMATCH
+        return {"status": status, "application": na, "credit_record": nb}
+
+    @staticmethod
+    def compare_address(a: str, b: str) -> dict:
+        """Exact match after normalization (abbreviated, uppercased)."""
+        na, nb = DataNormalizer.address(a), DataNormalizer.address(b)
+        status = _MATCH if na == nb else _MISMATCH
+        return {"status": status, "application": na, "credit_record": nb}
+
+    # ------------------------------------------------------------------ #
+    #  Record-level compare                                                #
+    # ------------------------------------------------------------------ #
+
+    def compare_records(self, application: dict, credit_record: dict) -> dict:
+        """
+        Compare a normalized application record against a normalized credit
+        record field by field.
+
+        Returns:
+            {
+                "overall": "match" | "mismatch" | "missing",
+                "fields": {
+                    "<field>": {"status": ..., "application": ..., "credit_record": ...},
+                    ...
+                },
+                "discrepancies": [list of field names that mismatched],
+            }
+        """
+        _currency_fields = {"annual_revenue", "requested_amount", "equipment_cost"}
+        comparators = {
+            "business_name": self.compare_business_name,
+            "ein":           self.compare_ein,
+            "phone":         self.compare_phone,
+            "credit_score":  self.compare_credit_score,
+            "business_address": self.compare_address,
+        }
+
+        results = {}
+        shared_keys = set(application) & set(credit_record)
+
+        for key in shared_keys:
+            av, cv = application[key], credit_record[key]
+            if av is None and cv is None:
+                results[key] = {"status": _MISSING, "application": av, "credit_record": cv}
+            elif key in comparators:
+                results[key] = comparators[key](av, cv)
+            elif key in _currency_fields:
+                results[key] = self.compare_currency(av, cv)
+            else:
+                # Generic equality for any other shared field
+                status = _MATCH if av == cv else _MISMATCH
+                results[key] = {"status": status, "application": av, "credit_record": cv}
+
+        discrepancies = [k for k, v in results.items() if v["status"] == _MISMATCH]
+        overall = _MISMATCH if discrepancies else (
+            _MISSING if all(v["status"] == _MISSING for v in results.values()) else _MATCH
+        )
+        return {"overall": overall, "fields": results, "discrepancies": discrepancies}
 
  # Main normalization method that applies type-specific normalization to each field
     def normalize_record(self, record: dict[str, Any]) -> dict[str, Any]:
