@@ -1,6 +1,6 @@
 """
 LLM Document Classifier
-Uses Claude to classify financial document types from extracted text.
+Uses OpenAI to classify financial document types from extracted text.
 Falls back to keyword matching when the LLM is unavailable or returns an
 unrecognized label.
 """
@@ -71,7 +71,7 @@ def classify_document(
     max_chars: int = 2000,
 ) -> str:
     """
-    Classify a financial document using Claude, falling back to keyword matching.
+    Classify a financial document using OpenAI, falling back to keyword matching.
 
     Args:
         text:       Extracted text from the document.

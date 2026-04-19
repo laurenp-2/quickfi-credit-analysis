@@ -21,7 +21,7 @@ cp .env.example .env
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Generate mock test data
+# 3. Generate mock test data (first time only)
 python data/mock/generate_mock_data.py
 
 # 4. Run the app
