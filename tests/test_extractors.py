@@ -94,3 +94,4 @@ class TestFinancialDocExtractor:
     def test_invalid_zip(self):
         with pytest.raises((ValueError, Exception)):
             FinancialDocExtractor(b"not a zip file").extract()
+

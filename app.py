@@ -2,7 +2,13 @@
 QuickFi Credit Agent — Streamlit UI
 Run:  streamlit run app.py
 """
+
+import tempfile
+from pathlib import Path
+
 import streamlit as st
+
+from agents.validation_agent import ValidationAgent
 
 from agents import generate_credit_summary
 from utils.ingest import ingest_documents
@@ -14,13 +20,17 @@ st.set_page_config(
 )
 
 st.title("QuickFi Credit Agent")
-st.caption("AI-powered credit validation and risk analysis for commercial equipment finance")
+st.caption(
+    "AI-powered credit validation and risk analysis for commercial equipment finance"
+)
 
 mode = st.sidebar.radio(
     "Select Mode",
     ["Validation", "Credit Summary"],
-    help="Validation: compare application data against credit records.\n"
-         "Credit Summary: analyze financial documents and generate a risk report.",
+    help=(
+        "Validation: compare application data against credit records.\n"
+        "Credit Summary: analyze financial documents and generate a risk report."
+    ),
 )
 
 # validation mode
@@ -32,12 +42,14 @@ if mode == "Validation":
     )
 
     col1, col2 = st.columns(2)
+
     with col1:
         app_file = st.file_uploader(
             "Credit Application (Excel or CSV)",
             type=["xlsx", "xls", "csv"],
-            help="The 'Input Data' spreadsheet",
+            help="The Input Data spreadsheet",
         )
+
     with col2:
         credit_files = st.file_uploader(
             "Credit Record PDFs",
@@ -46,12 +58,73 @@ if mode == "Validation":
             help="One PDF per credit record pulled for this applicant",
         )
 
-    if st.button("Run Validation", type="primary", disabled=not (app_file and credit_files)):
-        st.info("Validation pipeline coming in Week 4.")
+    if st.button(
+        "Run Validation",
+        type="primary",
+        disabled=not (app_file and credit_files),
+    ):
 
-# credit summary mode
+        with st.spinner("Running validation..."):
+
+            # Save application file temporarily
+            with tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=Path(app_file.name).suffix,
+            ) as tmp_app:
+                tmp_app.write(app_file.getbuffer())
+                application_path = tmp_app.name
+
+            # Save credit record files temporarily
+            credit_paths = []
+
+            for uploaded_file in credit_files:
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=Path(uploaded_file.name).suffix,
+                ) as tmp_credit:
+                    tmp_credit.write(uploaded_file.getbuffer())
+                    credit_paths.append(tmp_credit.name)
+
+            # Run validation agent
+            agent = ValidationAgent()
+
+            result = agent.run(
+                application_file=application_path,
+                credit_record_files=credit_paths,
+            )
+
+        st.success("Validation complete")
+
+        st.subheader("Validation Summary")
+
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
+            st.metric("Match Score", result["match_score"])
+
+        with c2:
+            st.metric("Confidence", result["match_confidence"].title())
+
+        with c3:
+            st.metric("Result", result["overall_result"])
+
+        st.write("Matched Credit Record:", result["matched_credit_record"])
+
+        st.subheader("Identity Match Summary")
+        st.json(result["identity_match_summary"])
+
+        st.subheader("Field Comparisons")
+        st.dataframe(
+            result["field_comparisons"],
+            use_container_width=True,
+        )
+
+# -------------------------------------------------------------------
+# Credit Summary Mode
+# -------------------------------------------------------------------
 else:
     st.header("Credit Summary Generator")
+
     st.markdown(
         "Upload a zip file containing the borrower's financial documents "
         "(P&L, balance sheet, bank statements, tax returns, etc.)."
@@ -72,7 +145,9 @@ else:
     )
 
     if fin_zip:
-        st.success(f"Uploaded: {fin_zip.name} ({fin_zip.size / 1024:.1f} KB)")
+        st.success(
+            f"Uploaded: {fin_zip.name} ({fin_zip.size / 1024:.1f} KB)"
+        )
 
     if st.button("Generate Credit Summary", type="primary", disabled=not fin_zip):
         loan_amount = loan_amount_input if loan_amount_input > 0 else None
