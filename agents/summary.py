@@ -12,6 +12,7 @@ import openai
 
 from config import OPENAI_API_KEY, OPENAI_MODEL
 from prompts.summary import summary_prompt
+from prompts.raw_summary import raw_summary_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ def _format_credit_records(credit: list) -> str:
     return "\n".join(lines)
 
 
-def _format_documents(documents: list) -> str:
+def _format_documents(documents: list, max_chars: int = _MAX_DOC_CHARS) -> str:
     if not documents:
         return "=== FINANCIAL DOCUMENTS ===\nNone provided.\n"
     lines = ["=== FINANCIAL DOCUMENTS ==="]
@@ -85,7 +86,7 @@ def _format_documents(documents: list) -> str:
             f"chars: {doc.get('char_count', 0)}, "
             f"ocr: {doc.get('used_ocr', False)})"
         )
-        text = (doc.get("raw_text") or "")[:_MAX_DOC_CHARS]
+        text = (doc.get("raw_text") or "")[:max_chars]
         lines.append(text if text else "(no text extracted)")
     return "\n".join(lines)
 
@@ -145,6 +146,64 @@ def generate_credit_summary(ingest_result: dict) -> dict:
 
     logger.info(
         "generate_credit_summary: done — risk=%s",
+        result.get("Risk Analysis", "unknown"),
+    )
+    return result
+
+
+def generate_credit_summary_raw(docs: list[dict], loan_amount: float | None = None) -> dict:
+    """
+    Generate a credit summary using only raw extracted document text — no parsers,
+    no ratio calculations. The LLM does all extraction and analysis itself.
+
+    Args:
+        docs:        list of dicts returned by FinancialDocExtractor.extract(), each with
+                     keys: filename, doc_type, raw_text, char_count, used_ocr.
+        loan_amount: optional requested loan amount in dollars.
+
+    Returns:
+        Parsed dict with keys:
+          "Risk Analysis", "Credit Profile", "Suggestions", "Fraud Detection",
+          "Recommended Loan Amount"
+    """
+    if not OPENAI_API_KEY:
+        raise RuntimeError("OPENAI_API_KEY is not set — cannot generate credit summary.")
+
+    loan_line = (
+        f"Requested Loan Amount: ${loan_amount:,.2f}\n\n"
+        if loan_amount
+        else "Requested Loan Amount: Not provided\n\n"
+    )
+    input_text = loan_line + _format_documents(docs, max_chars=10_000)
+    full_prompt = raw_summary_prompt + input_text
+
+    logger.info("generate_credit_summary_raw: calling %s …", OPENAI_MODEL)
+
+    try:
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            response_format={"type": "json_object"},
+            temperature=0.2,
+            messages=[
+                {"role": "system", "content": full_prompt},
+                {"role": "user",   "content": "Generate the credit summary now."},
+            ],
+        )
+    except openai.OpenAIError as e:
+        logger.error("generate_credit_summary_raw: OpenAI call failed: %s", e)
+        raise RuntimeError(f"OpenAI call failed: {e}") from e
+
+    raw = response.choices[0].message.content
+
+    try:
+        result = json.loads(raw)
+    except json.JSONDecodeError as e:
+        logger.error("generate_credit_summary_raw: could not parse JSON response: %s", e)
+        raise RuntimeError(f"Failed to parse LLM response as JSON: {e}") from e
+
+    logger.info(
+        "generate_credit_summary_raw: done — risk=%s",
         result.get("Risk Analysis", "unknown"),
     )
     return result

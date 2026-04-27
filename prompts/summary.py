@@ -32,6 +32,10 @@ following four sections:
    Note any inconsistencies, implausible figures, or signs of altered documents across the \
    provided materials. If nothing suspicious is found, state that clearly.
 
+5. "Recommended Loan Amount"
+   Based on the analysis, provide a recommended loan amount appropriate for this borrower. \
+   If a requested loan amount is visible in the ratios, assess whether it is appropriate.
+
 Respond in valid JSON using exactly this structure:
 
 {
@@ -41,7 +45,8 @@ Respond in valid JSON using exactly this structure:
     "Additional Documentation": ["List of helpful documents"],
     "Improvement Suggestions": ["List of actionable suggestions"]
   },
-  "Fraud Detection": "Description of any identified issues, or 'No issues identified.'"
+  "Fraud Detection": "Description of any identified issues, or 'No issues identified.'",
+  "Recommended Loan Amount": "A specific dollar amount, or 'Cannot determine' if not enough information"
 }
 
 Use the following data to generate the Credit Summary:
